@@ -220,18 +220,18 @@ This project uses [semantic versioning][5].
 Please use for all comments, discussions, feature requests or bug reports the GitHub [issues][4] functionality.
 
 ### 0.4.0 (2017-01-10)
-*new generated API functions / procedures*
-- adding a row_exists_yn function that returns 'Y' or 'N' varchar2 type as an extension of the boolean based row_exists function (to allow checking a row within SQL context)
-- adding additional read_row functions that takes unique constraint columns as parameter and returns the row, for each unique constraint one read_row function
-- new INSERT, UPDATE, DELETE Parameter for fine granular definition, which DML operations are allowed on the table
-- new DML View Parameter that decides whether or not to create a DML View as a logical layer between APEX and the database table
+####new generated API functions / procedures
+- adding a **row_exists_yn** function that returns 'Y' or 'N' varchar2 type as an extension of the boolean based **row_exists** function (to allow checking a row within SQL context)
+- adding additional **read_row** functions that takes unique constraint columns as parameter and returns the row, for each unique constraint one read_row function
+- **new INSERT, UPDATE, DELETE parameter** for fine granular definition, which DML operations are allowed on the table
+- **new DML View parameter** that decides whether or not to create a DML View as a logical layer between APEX and the database table
 
-*code optimizations*
+####code optimizations
 - getter functions for each column: remove unnecessary variable declaration (variable v_return)
 - setter functions for each column: remove unnecessary variable declaration (variable v_#column_name#)
 - limit clause for bulk collect operations introduced to avoid session memory conflicts
 
-*other stuff*
+####other stuff
 - added comments on internal procedures and functions
 - PL/SQL Doc for generated API Packages 
 - renaming internal variables more consistently
