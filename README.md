@@ -14,11 +14,12 @@ Please do not download directly this code - this is the development version and 
 - You only need to specify generation options once per table - parameters are saved in the package spec source and can be reused for regeneration
 - Standard CRUD methods (column and row type based) with an additional create or update version
 - Getter and setter for each column
-- A row exists function and per unique constraint a getter function to fetch the primary key by each unique constraint (single or multicolumn)
-- Deletion of rows can be disabled e.g. to avoid violation of referential integrity
+- A primary key based row exists boolean function and a row exists_yn varchar2 function that can be used in PL/SQL or SQL context
+- per unique constraint a getter function to fetch the primary key by each unique constraint (single or multicolumn)
+- Delete / Insert / Update of rows can be enabled or disabled e.g. to avoid deletion because of violation of referential integrity
 - Optional generic logging (one log entry for each changed column over all API enabled schema tables in one generic log table - very handy to create a record history in the user interface)
 - Checks for real changes during UPDATE operation and updates only if required
-- Supports APEX automatic row processing by generation of a updatable view with an instead of trigger, which calls simply the API and if enabled - the generic logging
+- Supports APEX automatic row processing by generation of an optional updatable view with an instead of trigger, which calls simply the API and if enabled - the generic logging
 
 
 ## License
@@ -118,21 +119,36 @@ As you can see, you need no parameters for this procedure - they are taken from 
     - If false, the generator tries to find a unique column prefix for all the colums in your table
         - If he find one, this column prefix is first deleted from your column name before building the short name with 26 characters
         - If he could not find a column prefix, then the generator throws an exception (should we simple ignore this? let us know...)
-4. p_enable_deletion_of_rows: boolean, default false
+4. p_enable_insertion_of_rows: boolean, default true
+    - selfexplanatory, isn't it?
+    - If true, create_row procedure and function is generated
+	- If true and parameter p_enable_update_of_rows is true, create_or_update_row procedure and function is generated
+	- If false, create_row and create_or_update_row procedure and function is NOT generated
+	- If false, the corresponding DML view(#TABLE_NAME_24#_DML_V) instead of trigger (#TABLE_NAME_24#_IOIUD) raises an exception on an insert attempt
+5. p_enable_update_of_rows: boolean, default true
+    - selfexplanatory, isn't it?
+    - If true, update_row procedure is generated
+	- If true and parameter p_enable_insertion_of_rows is true, create_or_update_row procedure and function is generated
+	- If false, create_row and create_or_update_row procedure and function is NOT generated
+	- If false, setter procedures for each columns are NOT generated
+	- If false, the corresponding DML view(#TABLE_NAME_24#_DML_V) instead of trigger (#TABLE_NAME_24#_IOIUD) raises an exception on an update attempt
+6. p_enable_deletion_of_rows: boolean, default false
     - selfexplanatory, isn't it?
     - If true, a delete_row procedure is generated
-    - If false, the delete_row procedure is NOT generated and the corresponding DML view(#TABLE_NAME_24#_DML_V) instead of trigger (#TABLE_NAME_24#_IOIUD) raises an exception on a delete attempt
-5. p_enable_generic_change_log: boolean, default false
+    - If false, the delete_row procedure is NOT generated 
+	- If false, the corresponding DML view(#TABLE_NAME_24#_DML_V) instead of trigger (#TABLE_NAME_24#_IOIUD) raises an exception on a delete attempt
+7. p_enable_generic_change_log: boolean, default false
     - If true, one log entry is created for each changed column over all API enabled schema tables in one generic log table - very handy to create a record history in the user interface
         - The table generic_change_log and a corresponding sequence generic_change_log_seq is created in the schema during the API creation on the very first API that uses this feature
         - We could long describe this feature - try it out in your development system and decide, if you want to have it or not
         - One last thing: This could NOT replace a historicization, but can deliver things, that would not so easy with a historicization - we use both sometimes together...
-6. p_sequence_name: string, default NULL
+8. p_sequence_name: string, default NULL
     - If a sequence name is given here, then the resulting API is taken the ID for the create_row methods and you don't need to create a trigger for your table only for the sequence handling
     - you can use the following substitution strings, the generator is replacing this at runtime: #TABLE_NAME_24#, #TABLE_NAME_26#, #TABLE_NAME_28#, #PK_COLUMN_26#, #PK_COLUMN_28#, #COLUMN_PREFIX#
         - Example 1: #TABLE_NAME_26#_SEQ
         - Example 2: SEQ_#PK_COLUMN_26#
         - Example 3: #COLUMN_PREFIX#_SEQ
+		
 
 Finally a complete PL/SQL example with all default parameter values:
 
@@ -220,21 +236,23 @@ This project uses [semantic versioning][5].
 Please use for all comments, discussions, feature requests or bug reports the GitHub [issues][4] functionality.
 
 ### 0.4.0 (2017-01-10)
-####new generated API functions / procedures
+#### new generated API functions / procedures
 - adding a **row_exists_yn** function that returns 'Y' or 'N' varchar2 type as an extension of the boolean based **row_exists** function (to allow checking a row within SQL context)
 - adding additional **read_row** functions that takes unique constraint columns as parameter and returns the row, for each unique constraint one read_row function
 - **new INSERT, UPDATE, DELETE parameter** for fine granular definition, which DML operations are allowed on the table
-- **new DML View parameter** that decides whether or not to create a DML View as a logical layer between APEX and the database table
+- **new DML view parameter** that decides whether or not to create an updatable DML View as a logical layer between APEX and the database table
+- DML view trigger additionally catches unallowed DML operations and throws exceptions in dependency of **new INSERT, UPDATE, DELETE parameter**
 
-####code optimizations
+#### code optimizations
 - getter functions for each column: remove unnecessary variable declaration (variable v_return)
 - setter functions for each column: remove unnecessary variable declaration (variable v_#column_name#)
 - limit clause for bulk collect operations introduced to avoid session memory conflicts
 
-####other stuff
-- added comments on internal procedures and functions
+#### other stuff
+- added some additional comments on internal procedures and functions
 - PL/SQL Doc for generated API Packages 
 - renaming internal variables more consistently
+- supporting special column names, because column names are written in quotes now
 
 ### 0.3.0 (2016-07-03)
 
